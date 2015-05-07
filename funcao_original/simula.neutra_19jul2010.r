@@ -122,6 +122,8 @@ t0=proc.time()[[3]]
   attributes(resulta)$start=list(especies=S, individuos=j, nprop=X, cv=cv, ciclos=ciclo, passos=step)
   return(resulta)
 }
+
+## Pi esteve aqui
 ################################################
 ### funcăo modelo totalmente neutro - Hubell
 #Esta e a funca simula.neutra.step editada para retirara o tradeoff reprodutivo e a variacao neste 
