@@ -1,10 +1,10 @@
 ######################################
 ######### Simulando cenario neutro Hubbel
 ######################################
-# versao corrigida por Luisa Novara, em 2014
+# versao modificada por Luisa Novara, em 2014
 # versao inicial A. A de Oliveira, outubro 2009, modificado por Paulo Inacio, outubro 2009
 ########################################
-# mudança: troca o antigo argumento cv (coeficiente de variacao) pelo dp (desvio padrao) da distribuicao normal da herdabilidade de xi. Isso permite que a herdabilidade permaneça constante e evita o erro de gerar herdabilidade maior quando os valores de xi sao mais baixos (i.e., evita que os valores de xi da populacao fiquem "presos" em valores mais baixos e isso mascare os reais resultados das simulacoes.)
+# mudança: troca o antigo argumento cv (coeficiente de variacao) pelo dp (desvio padrao) da distribuicao normal da herdabilidade de xi. Isso permite que a herdabilidade permaneça constante e evita o erro de gerar herdabilidade maior quando os valores de xi sao mais baixos (i.e., evita que os valores de xi da populacao fiquem "presos" em valores mais baixos e isso mascare os reais resultados das simulacoes)
 ########################################
 # funcao principal
 ###################
@@ -68,7 +68,7 @@ simula.neutra.step=function(S= 100, j=10, X=1000, dp=0.1, ciclo=1e6, step=100)
   for(i in 2:(1+ciclo/step))
   {
     n.mortes <- 0
-    for(j in 1:step) 
+    for(a in 1:step) 
     {
       ## Sorteio dos que morrerao
       morte=rbinom(J, 1, prob=p.death)
@@ -151,7 +151,7 @@ simula.neutra.hub=function(S= 100, j=10, ciclo=1e4, step=100){
   ##Aqui comecam as simulacoes
   for(i in 2:(1+ciclo/step)){
     n.mortes <- 0
-    for(j in 1:step){
+    for(a in 1:step){
       ## Sorteio dos que morrerao
       morte=rbinom(J, 1, prob=p.death)
       ##Total de mortos, que e armazenado em n.dead

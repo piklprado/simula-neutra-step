@@ -1,18 +1,26 @@
-##Funções acessorias e graficas do Modelo Neutro
-## Conta espécie do arquivo de saída da simulação
-# o objeto de entrada é o $sp.list do arquivo de saída
-##AAO junho 2010
+####################################################################
+########## FUNCOES ACESSORIAS E GRAFICAS DO MODELO NEUTRO ##########
+####################################################################
 
+###### OBSERVACAO 1: AQUI, simulacao = RESULTADO (LISTA FINAL) DE DETERMINADA SIMULACAO COM simula.neutra.step
+
+####################################################################
+##### Conta especie do arquivo de saida da simulacao + Grafico #####
+################ entrada: x = $sp.list da simulacao ################
+########################## AAO junho 2010 ##########################
+####################################################################
 conta.sp=function(x)
  {
  length(unique(x))
  }
+riqueza.tempo <- apply(simulacao$sp.list,2,conta.sp)
+plot(riqueza.tempo,type="l",xlab="Tempo",ylab="Riqueza",main="Variação da riqueza")
 
-
-#################################################
-#### Gráfico da variação na SAD ao longo do tempo
-## entrada: dados é a tabela sp.list do objeto resultado da simulação e info são os attributos do resultado  
-#################################################
+####################################################################
+########### Grafico da variacao na SAD ao longo do tempo ###########
+##### entrada: dados = $sp.list da simulacao, info = atributos #####  
+########################## AAO junho 2010 ##########################
+####################################################################
 graf.abund=function(dados=resulta,...)
 	{
 	info=attributes(dados)
@@ -39,25 +47,23 @@ graf.abund=function(dados=resulta,...)
 	points(sort(table(factor(dados$sp.list[,dim(dados$sp.list)[2]], levels=1:nspp)), decreasing=TRUE), type="l", col="red", lwd=2)
 	legend("topright", lty=1, col=c("green", "blue", "red"), bty="n", legend=c("start", "middle", "end") )
 }
-##################################$$
-#Rank-abundance Plot
-############################
-#Dado um vetor de abundăncia de espécies, faz um gráfico simples de Whitaker (log abundâncias x ranque).
-########### possibilidade: as.vector(table(simulacao$sp.list[,101])), para o rank de abundancia do tempo final da simulacao
+
+####################################################################
+######################## Rank-abundance plot ####################### grafico simples de Whitaker (log abundâncias x ranque)
+############# entrada: vetor de abundancia de especies ############# possibilidade: as.vector(table(simulacao$sp.list[,101])), para o rank de abundancia do tempo final da simulacao (101, neste exemplo, é o tempo final)
+########################## AAO junho 2010 ##########################
+####################################################################
 w.plot <- function(x,...)
 {
   plot(1:length(x),sort(x,decreasing=T),
        ylab="Abundance",log="y",...)
 }
 
-################################
-#Box-plot e rank-abundance plot
-################################
-#Funçăo feita para explorar graficamente a distribuiçăo da fertilidade. Plota box-plots da fertlidade 
-#dos indivíduso de cada espécie, sobre um gr[áfico de rank-abundância da fertilidade de cada espécie, 
-#num dado instante gravado da simulaçăo (argumento tempo).
-## dados é o objeto (list) resultado da simulação
-
+####################################################################
+################## Box-plot e rank-abundance plot ################## explora graficamente a distribuicao da fertilidade. Plota box-plots da fertlidade dos individuos de cada especie, sobre um grafico de rank-abundancia da fertilidade de cada especie, num dado instante gravado da simulacoo (argumento tempo)
+###### entrada: dados = objeto (lista resultante) da simulacao #####  
+########################## AAO junho 2010 ##########################
+####################################################################
 box.w <- function(dados, tempo=NULL )
  {
  if(is.null(tempo))
@@ -73,13 +79,13 @@ box.w <- function(dados, tempo=NULL )
   boxplot(prop~factor(sp,levels=names(ab)[order(ab,decreasing=T)]),xlab="Species Codes", ylab="Number of Seeds")
   par(mfrow=c(1,1))
   }
-#################################
-#Fertilidade Média por Espécie
-##############################
-#A simulaçăo grava uma matriz com as fertilidades de cada indivíduo a cada step ciclos. 
-#Esta funçăo resume estes dados, calculando uma estatística descritiva (o default é a média)
-# da fertilidade de cada espécie, em cada instante de tempo.
 
+####################################################################
+############## Fertilidade media por especie + Grafico ############# calcula uma estatistica descritiva (o default eh a media) da fertilidade de cada especie, em cada instante de tempo. Fora da funcao, pode-se plotar a matriz resultante em um grafico
+############# entrada: cod.sp = $sp.list da simulacao, #############
+################# n.propag = $sementes da simulacao ################
+########################## AAO junho 2010 ##########################
+####################################################################
 fert.t <- function(cod.sp,n.propag,fun=mean){
   especie <- unique(cod.sp[,1])
   medias <- matrix(ncol=ncol(n.propag),nrow=length(especie))
@@ -90,18 +96,37 @@ fert.t <- function(cod.sp,n.propag,fun=mean){
   }
 return(medias)
 }
+matplot(t(),type="l",xlab="Tempo",ylab="Esforço reprodutivo instantâneo",main="Variação do ERI por espécie",labels=c())
 
-## uma versão resumida
-# AAO 06 February 2012 
-### parece não haver diferença de velocidade de processamento!
+######################### uma versao resumida ######################### parece nao haver diferenca de velocidade de processamento
+######################### AAO fevereiro 2012 ##########################
 fert.t1 <- function(cod.sp,n.propag,fun=mean)
 { 
   especie <- unique(cod.sp[,1])
-  #sp.level<-factor(cod.sp,levels=cod.sp)
+  sp.level<-factor(cod.sp,levels=cod.sp)
   t.a<-function(x){tapply(n.propag[,x],factor(cod.sp[,x],levels=especie),fun)}
   res<-sapply(1:ncol(n.propag), t.a)
   colnames(res) <- colnames(n.propag)
   rownames(res) <- paste("sp",especie, sep="")
   return(res)
 }
+matplot(t(),type="l",xlab="Tempo",ylab="Esforço reprodutivo instantâneo",main="Variação do ERI por espécie",labels=c())
 
+########################## versao thais lopes ######################### 
+########################### TSL 2 sem 2014 ############################
+str(simulacao)
+# S <- numero de especies
+# step <- número de passos salvos
+identidade<-simulacao$sp.list
+propagulos<-simulacao$sementes
+caixa<-rep(NA,S) #criando um objeto vazio
+tabela.final<-matrix(nrow=S, ncol=(step+1)) #criando uma tabela cheia de NA onde eu vou jogar as medias de propagulos para cada especie (linhas) e para cada step (colunas)
+rownames(tabela.final)<-c(1:S) #so deixando os nomes das linhas bonitinhos
+colnames(tabela.final)<-colnames(identidade) #deixando os nomes das colunas bonitinhos, que nem da tabela identidade
+for(j in 1:(step+1)) #criando um indicador "j" que recebe valores do numero da coluna
+{for (i in 1:S) #i vai receber numeros equivalentes aos numeros de cada identidade
+{caixa<-which(identidade[,j]==i)
+ tabela.final[i,j]<-mean(propagulos[caixa,j],na.rm=T)         
+}
+}
+matplot(t(tabela.final),type="l",xlab="Tempo",ylab="Esforço reprodutivo instantâneo",main="Variação do ERI por espécie",labels=c())

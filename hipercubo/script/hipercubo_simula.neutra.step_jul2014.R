@@ -17,13 +17,16 @@ q.arg <- list( list(min=2,max=100), list(min=10,max=1000),
                list(min=1, max=10), list(meanlog=0.5,sdlog=1))
 ###################### MINHA FUNÇÃO: #####################
 ################### SIMULA.NEUTRA.STEP ###################
-simula.neutra.step=function(S= 100, j=10, xi=10, cv=0.1, ciclo=1e6, step=100)
+simula.neutra.step=function(S= 100, j=10, X=1000, dp=0.1, ciclo=1e6, step=100)
 {
   t0=proc.time()[[3]]
   ## Tamanho da comunidade
   J <- S*j
-  ## Esforco reprodutivo total
-  X <- xi*J ## ou coloco X <- xi*ciclo ?
+  ##Verifica se X e multiplo de J
+  if(abs(X/J - round(X/J)) > .Machine$double.eps^0.5) ## aqui verifica se o X/J e inteiro ou quase!
+  {
+    stop("\n\tO potencial reprodutivo (X) precisa ser multiplo do tamanho da comunidade (J). Tente novamente!\n\n")
+  } 
   ##Matrizes para guardar os resultados
   ## matriz da especie de cada individuo por ciclo
   ind.mat=matrix(nrow=J,ncol=1+ciclo/step) 
@@ -39,18 +42,19 @@ simula.neutra.step=function(S= 100, j=10, xi=10, cv=0.1, ciclo=1e6, step=100)
   ## Todas as especies comecam com o mesmo numero de individuos (j=J/S)
   ind.mat[,1] <- rep(1:S,each=j)
   cod.sp <- ind.mat[,1]
-  ##A probabilidade inicial de morte, tomada de uma geométrica,
+  ##A probabilidade inicial de morte, tomada de uma geometrica,
   ##dado que o numero de mortes esperado por ciclo eh a mesma para todos (p=1/J)
   dead.mat[,1] <- 1/J
   p.death <- dead.mat[,1]
-  ##O esforco reprodutivo instantaneo inicial é um dos definidos pelo modelo
-  prop.mat[,1] <- xi
+  ##O esforco reprodutivo inicial e deduzido da esperanca de tempo de vida da geometrica E[t]=J
+  ## o que portanto resulta em X/J propagulos produzidos a cada ciclo, por todos
+  prop.mat[,1] <- X/J
   n.propag <- prop.mat[,1]
   ##Aqui comecam as simulacoes
   for(i in 2:(1+ciclo/step))
   {
     n.mortes <- 0
-    for(j in 1:step) 
+    for(a in 1:step) 
     {
       ## Sorteio dos que morrerao
       morte=rbinom(J, 1, prob=p.death)
@@ -70,7 +74,8 @@ simula.neutra.step=function(S= 100, j=10, xi=10, cv=0.1, ciclo=1e6, step=100)
         papi <- c()
         ##Um loop para sortear o pai entre os individuos da especie de cada
         ## propagulo-mae sorteado
-        for(w in 1:D){
+        for(w in 1:D)
+        {
           papi[w] <- sample(n.propag[ cod.sp==cod.sp[mami[w]] ],1)
         }
         ##O valor esperado de propagulos dos filhotes eh
@@ -81,8 +86,8 @@ simula.neutra.step=function(S= 100, j=10, xi=10, cv=0.1, ciclo=1e6, step=100)
         cod.sp[nascer]<-cod.sp[mami]
         ## Numero medio de propagulos dos novos individuos nascidos e sorteada
         ## de uma normal discretizada e truncada entre 1 e J,
-        ## com o coeficiente de variacao estabelecido
-        n.propag[nascer] <- sapply(medias.prop,rnormt,cv=cv,min=1,max=X)
+        ## com o desvio padrao estabelecido
+        n.propag[nascer] <- sapply(medias.prop,rnormt,dp=dp,min=1,max=X)
         ##A matriz de probabilidades de morrer eh atualizada para os novos individuos
         p.death[nascer] <- n.propag[nascer]/X
       }
@@ -92,38 +97,33 @@ simula.neutra.step=function(S= 100, j=10, xi=10, cv=0.1, ciclo=1e6, step=100)
     dead.mat[,i] <- p.death
     prop.mat[,i] <- n.propag
     n.dead[i] <- n.mortes
+    ##cat(format(Sys.time(), "%d%b%Y_%H:%M"), "\t ciclo = ", i, "\n") # para avisar a cada ciclo! desligar se estiver usando Rcloud
   }
   tempo <- seq(0,ciclo,by=step)
   colnames(ind.mat) <- tempo
   colnames(dead.mat) <- tempo
   colnames(prop.mat) <- tempo
   names(n.dead) <- tempo
-  ## Calculando riqueza final
-  riq.final <- length(unique(ind.mat[,(1+(ciclo/step))]))
-  ## Calculando o desvio padrão da prob. de morrer (que indica a variação entre espécies)
-  prob.sp <- tapply(dead.mat[,(1+(ciclo/step))], list(ind.mat[,(1+(ciclo/step))]), mean)
-  sd.dead <- sd(prob.sp)
-  ## Calculando a correlação entre prob. de morrer e abundância por espécie
-  ab.sp <- table(ind.mat[,(1+(ciclo/step))])
-  cor.dead <- corr(cbind(ab.sp, prob.sp))
-  ## Chamando o resultado
-  resulta=list(tempo=tempo,sp.list=ind.mat,sementes=prop.mat,prob.morte=dead.mat,n.mortes=n.dead,riqueza.final=riq.final,sd.prob.morte=sd.dead,corr=cor.dead)
+  resulta=list(tempo=tempo,sp.list=ind.mat,sementes=prop.mat,prob.morte=dead.mat,n.mortes=n.dead)
   t1=proc.time()[[3]]
   cat("\n\t tempo de processamento: ", round((t1-t0)/60,2),"\n") 
   ## incluindo atributos no arquivo resulta
-  #attributes(resulta)$start <- list(espécies=S,indivíduos/sp=j,esforço reprodutivo instantâneo=xi,coeficente de variação=cv,ciclos=ciclo,passos=step)
+  attributes(resulta)$start=list(especies=S, individuos=j, nprop=X, sd=dp, ciclos=ciclo, passos=step)
   return(resulta)
 }
 ################### FUNÇÃO ACESSÓRIA À ###################
 ################### SIMULA.NEUTRA.STEP ###################
-rnormt <- function(mean,n=1,cv,min,max)
+rnormt <- function(mean,n=1,dp,min,max)
 {
   vals <- (min-0.5):(max+0.5)
-  p <- pnorm(vals,mean=mean,sd=mean*cv)
+  p <- pnorm(vals,mean=mean,sd=dp)
   p2 <- diff(p)
   sample(min:max,n,prob=p2,replace=T)
 }
-############### SIMULA.NEUTRA.STEP.EXTERNA ###############
+############ FUNÇÕES DE ANÁLISE EXPLORATÓRIA #############
+
+
+############### SIMULA.NEUTRA.STEP.EXTERNA ############### ### modificar
 simula.neutra.step.externa=function(S, j, xi, cv){
   ciclo <- 100
   step <- 100
