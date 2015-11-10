@@ -7,14 +7,14 @@
 require(pse)
 
 ################# LISTANDO OS PARÂMETROS #################
-factors <- c("S", "j", "xi", "cv")
+factors <- c("S", "j", "X", "dp")
 ############### DEFININDO AS DISTRIBUIÇÕES ###############
 ############ DE PROBABILIDADE DOS PARÂMETROS #############
 q <- c("qunif", "qunif", "qunif", "qlnorm")
 ################ DEFININDO OS PARÂMETROS #################
 #################### DAS DISTRIBUIÇÕES ###################
 q.arg <- list( list(min=2,max=100), list(min=10,max=1000),
-               list(min=1, max=10), list(meanlog=0.5,sdlog=1))
+               list(min=1, max=1000), list(meanlog=0.5,sdlog=1))
 ###################### MINHA FUNÇÃO: #####################
 ################### SIMULA.NEUTRA.STEP ###################
 simula.neutra.step=function(S= 100, j=10, X=1000, dp=0.1, ciclo=1e6, step=100)
@@ -124,18 +124,20 @@ rnormt <- function(mean,n=1,dp,min,max)
 
 
 ############### SIMULA.NEUTRA.STEP.EXTERNA ############### ### modificar
-simula.neutra.step.externa=function(S, j, xi, cv){
+simula.neutra.step.externa=function(S, j, X, dp){
   ciclo <- 100
   step <- 100
-  x <- simula.neutra.step(round(S), round(j), xi, cv, ciclo, step)
-  return(unlist(x[6:8]))
+  if(abs(X/(S*j)) - round(X/(S*j)) > .Machine$double.eps^0.5)
+  {stop}
+  x <- simula.neutra.step(S, j, X, dp, ciclo, step)
+  return(unlist(x[3]))
 }
 ####################### "WRAPPER" ########################
 modelRun <- function (dados) {
   mapply(simula.neutra.step.externa, dados[,1], dados[,2], dados[,3], dados[,4]) }
 ################## RODANDO O HIPERCUBO ###################
-res.names <- c("Riqueza final","Desvio padrão da prob de morte","Correlação entre prob de morte e abund por sp")
-hipersuperincrivelcubolatino <- LHS(modelRun, factors, N=10, q, q.arg, res.names, nboot=50)
+res.name <- c("propagulos/ciclo")
+hipersuperincrivelcubolatino <- LHS(modelRun, factors, N=10, q, q.arg, res.name, nboot=50)
 ######### ACESSANDO OS VALORES USADOS COMO INPUT #########
 get.data(hipersuperincrivelcubolatino)
 ################ ACESSANDO OS RESULTADOS #################
