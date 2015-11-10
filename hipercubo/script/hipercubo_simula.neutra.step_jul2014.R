@@ -150,4 +150,5 @@ plotprcc(hipersuperincrivelcubolatino)
 ############### SBMA: A AMOSTRA ESTÁ OK? #################
 #targetLHS <- target.sbma (target=0.7, modelRun, factors, q, q.arg, res.names, FUN=min)
 
+#
 
