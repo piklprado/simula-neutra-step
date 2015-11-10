@@ -1,20 +1,3 @@
-##########################################################
-#################### HIPERCUBO LATINO ####################
-##########################################################
-#################### PRIMEIROS TESTES ####################
-##########################################################
-
-require(pse)
-
-################# LISTANDO OS PARÂMETROS #################
-factors <- c("S", "j", "X", "dp")
-############### DEFININDO AS DISTRIBUIÇÕES ###############
-############ DE PROBABILIDADE DOS PARÂMETROS #############
-q <- c("qunif", "qunif", "qunif", "qlnorm")
-################ DEFININDO OS PARÂMETROS #################
-#################### DAS DISTRIBUIÇÕES ###################
-q.arg <- list( list(min=2,max=100), list(min=10,max=1000),
-               list(min=1, max=1000), list(meanlog=0.5,sdlog=1))
 ###################### MINHA FUNÇÃO: #####################
 ################### SIMULA.NEUTRA.STEP ###################
 simula.neutra.step=function(S= 100, j=10, X=1000, dp=0.1, ciclo=1e6, step=100)
@@ -120,18 +103,30 @@ rnormt <- function(mean,n=1,dp,min,max)
   p2 <- diff(p)
   sample(min:max,n,prob=p2,replace=T)
 }
-############ FUNÇÕES DE ANÁLISE EXPLORATÓRIA #############
-
-
-############### SIMULA.NEUTRA.STEP.EXTERNA ############### ### modificar
+############### SIMULA.NEUTRA.STEP.EXTERNA ############### 
 simula.neutra.step.externa=function(S, j, X, dp){
   ciclo <- 100
   step <- 100
   if(abs(X/(S*j)) - round(X/(S*j)) > .Machine$double.eps^0.5)
   {stop}
+  else{
   x <- simula.neutra.step(S, j, X, dp, ciclo, step)
-  return(unlist(x[3]))
+  return(unlist(x[3])[1])}
 }
+##########################################################
+#################### HIPERCUBO LATINO ####################
+##########################################################
+require(pse)
+################# LISTANDO OS PARÂMETROS #################
+##################### DA MINHA FUNÇÃO ####################
+factors <- c("S", "j", "X", "dp")
+############### DEFININDO AS DISTRIBUIÇÕES ###############
+############ DE PROBABILIDADE DOS PARÂMETROS #############
+q <- c("qunif", "qunif", "qunif", "qlnorm")
+################ DEFININDO OS PARÂMETROS #################
+#################### DAS DISTRIBUIÇÕES ###################
+q.arg <- list( list(min=2,max=100), list(min=10,max=1000),
+               list(min=1, max=1000), list(meanlog=0.5,sdlog=1))
 ####################### "WRAPPER" ########################
 modelRun <- function (dados) {
   mapply(simula.neutra.step.externa, dados[,1], dados[,2], dados[,3], dados[,4]) }
@@ -140,7 +135,7 @@ res.name <- c("propagulos/ciclo")
 hipersuperincrivelcubolatino <- LHS(modelRun, factors, N=10, q, q.arg, res.name, nboot=50)
 ######### ACESSANDO OS VALORES USADOS COMO INPUT #########
 get.data(hipersuperincrivelcubolatino)
-################ ACESSANDO OS RESULTADOS #################
+################ ACESSANDO OS RESULTADOS #################hip
 get.results(hipersuperincrivelcubolatino)
 ################# ANÁLISE DE INCERTEZA ###################
 plotecdf(hipersuperincrivelcubolatino, stack=F)
